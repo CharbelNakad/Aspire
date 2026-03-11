@@ -69,6 +69,28 @@ EXPECTED_OUTPUTS = {
 DELAY_BETWEEN_REQUESTS = 3
 
 
+def preview_text(text: str, limit: int = 240) -> str:
+    """Return a single-line preview of text for console logging."""
+    compact = " ".join(text.split())
+    return compact if len(compact) <= limit else compact[:limit] + "..."
+
+
+def normalize_response_body(body: object) -> dict | None:
+    """Normalize the webhook payload into a single result object."""
+    if isinstance(body, dict):
+        return body
+
+    # n8n may return a single-item array from Respond to Webhook.
+    if isinstance(body, list):
+        if len(body) == 1 and isinstance(body[0], dict):
+            return body[0]
+        print(f"  [ERROR] Expected one result object, received a list with {len(body)} item(s)")
+        return None
+
+    print(f"  [ERROR] Expected a JSON object, received {type(body).__name__}")
+    return None
+
+
 def send_request(payload: dict) -> dict | None:
     """Send a single test request to the webhook."""
     try:
@@ -78,8 +100,24 @@ def send_request(payload: dict) -> dict | None:
             headers={"Content-Type": "application/json"},
             timeout=60
         )
+        print(f"  HTTP Status: {response.status_code}")
         response.raise_for_status()
-        return response.json()
+
+        raw_body = response.text.strip()
+        print(f"  Response Body: {preview_text(raw_body) if raw_body else '[empty body]'}")
+
+        if not raw_body:
+            print("  [ERROR] Webhook returned an empty response body")
+            return None
+
+        try:
+            parsed_body = response.json()
+        except json.JSONDecodeError as e:
+            print(f"  [ERROR] Response was not valid JSON: {e}")
+            return None
+
+        print(f"  Parsed JSON Type: {type(parsed_body).__name__}")
+        return normalize_response_body(parsed_body)
     except requests.exceptions.ConnectionError:
         print(f"  [ERROR] Cannot connect to {WEBHOOK_URL}")
         print(f"  Make sure n8n is running and the webhook is active.")
@@ -88,7 +126,8 @@ def send_request(payload: dict) -> dict | None:
         print(f"  [ERROR] Request timed out after 60s")
         return None
     except requests.exceptions.HTTPError as e:
-        print(f"  [ERROR] HTTP {e.response.status_code}: {e.response.text[:200]}")
+        response_text = e.response.text.strip() if e.response is not None else ""
+        print(f"  [ERROR] HTTP {e.response.status_code}: {preview_text(response_text) if response_text else '[empty body]'}")
         return None
     except Exception as e:
         print(f"  [ERROR] Unexpected error: {e}")
@@ -119,7 +158,7 @@ def main():
 
         result = send_request(payload)
 
-        if result:
+        if result is not None:
             validate_response(payload['id'], result)
             results.append(result)
         else:

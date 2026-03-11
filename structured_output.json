@@ -3,35 +3,77 @@
     "category": "Bug Report",
     "priority": "High",
     "confidence_score": 0.95,
-    "core_issue": "User cannot log in and receives a 403 error when accessing their account after last Tuesday's update.",
+    "core_issue": "User receives a 403 error when attempting to log in to arcvault.io/user/jsmith after the update deployed last Tuesday.",
     "extracted_entities": {
+      "account_id": "jsmith",
       "url": "arcvault.io/user/jsmith",
       "error_code": "403",
-      "timestamp_reference": [
-        "this morning",
-        "last Tuesday"
-      ]
+      "timestamp_reference": "last Tuesday"
     },
     "urgency_signal": "High",
     "destination_queue": "Engineering",
     "escalation_flag": false,
     "escalation_reason": "",
-    "human_summary": "The customer reports being blocked from logging in with a 403 error at arcvault.io/user/jsmith; the issue started after last Tuesday's update and was observed this morning. They need access restored and confirmation of the root cause. Please check authentication/authorization changes from the update and review logs for 403 responses for this account."
+    "human_summary": "Customer reports they cannot log in and receive a 403 error when accessing arcvault.io/user/jsmith. Issue began after the update rolled out last Tuesday; customer needs access restored or guidance on resolving the permission/authorization error. Critical details: affected account 'jsmith' and error code 403."
   },
   {
-    "error": "No response",
-    "request_id": 2
+    "category": "Feature Request",
+    "priority": "Medium",
+    "confidence_score": 0.95,
+    "core_issue": "Customer requests a bulk export feature for audit logs to save time on compliance-related work.",
+    "extracted_entities": {},
+    "urgency_signal": "Medium",
+    "destination_queue": "Product",
+    "escalation_flag": false,
+    "escalation_reason": "",
+    "human_summary": "Customer is requesting a bulk export capability for audit logs to support their compliance workflows. They describe themselves as a compliance-heavy organization and say this feature would save them hours each month, so please evaluate feasibility and prioritization for adding an export option for audit logs."
   },
   {
-    "error": "No response",
-    "request_id": 3
+    "category": "Billing Issue",
+    "priority": "High",
+    "confidence_score": 0.95,
+    "core_issue": "Customer reports invoice #8821 shows a charge of $1,240 while their contract rate is $980/month and requests an investigation.",
+    "extracted_entities": {
+      "invoice_number": "8821",
+      "dollar_amounts": [
+        "$1,240",
+        "$980/month"
+      ]
+    },
+    "urgency_signal": "High",
+    "destination_queue": "Billing",
+    "escalation_flag": false,
+    "escalation_reason": "",
+    "human_summary": "The customer says invoice #8821 billed $1,240, but their contracted rate is $980/month and asks us to look into the discrepancy. Please verify the invoice details, billing rate applied, and adjust or refund if an overcharge occurred. Key details: invoice number 8821 and the two amounts ($1,240 vs $980/month)."
   },
   {
-    "error": "No response",
-    "request_id": 4
+    "category": "Technical Question",
+    "priority": "Low",
+    "confidence_score": 0.95,
+    "core_issue": "Customer is asking whether ArcVault supports SSO integration with Okta and requests guidance on how to configure it as they evaluate switching their auth provider.",
+    "extracted_entities": {
+      "provider": "Okta"
+    },
+    "urgency_signal": "Low",
+    "destination_queue": "General Support",
+    "escalation_flag": false,
+    "escalation_reason": "",
+    "human_summary": "The customer wants to know if ArcVault can be set up with Okta SSO and is evaluating a switch of their authentication provider. Please provide documentation or step-by-step guidance for Okta SSO setup, compatibility notes, and any prerequisites or contact for configuration support."
   },
   {
-    "error": "No response",
-    "request_id": 5
+    "category": "Incident/Outage",
+    "priority": "High",
+    "confidence_score": 0.95,
+    "core_issue": "The customer's dashboard stopped loading around 2pm EST and multiple users are affected.",
+    "extracted_entities": {
+      "product_name": "dashboard",
+      "timestamp_reference": "around 2pm EST",
+      "affected_users": "multiple users"
+    },
+    "urgency_signal": "High",
+    "destination_queue": "Escalation Queue",
+    "escalation_flag": true,
+    "escalation_reason": "Category is Incident/Outage — requires immediate human review",
+    "human_summary": "The customer's dashboard stopped loading around 2pm EST and multiple users are affected; they report the issue is on our side. They require immediate investigation and restoration of dashboard access; no account ID or error code was provided in the message."
   }
 ]
