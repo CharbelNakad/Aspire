@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 
 load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
 
-WEBHOOK_URL = os.getenv('N8N_WEBHOOK_URL', 'https://ferylop.app.n8n.cloud/webhook-test/arcvault-intake')
+WEBHOOK_URL = os.getenv('N8N_WEBHOOK_URL', 'https://ferylop.app.n8n.cloud/webhook/arcvault-intake')
 
 TEST_REQUESTS = [
     {
