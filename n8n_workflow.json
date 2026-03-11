@@ -1,0 +1,368 @@
+{
+  "name": "ArcVault AI Intake & Triage Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "arcvault-intake",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "node-webhook",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "arcvault-intake"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"request_id\": {{ $json.body.id }},\n  \"source\": \"{{ $json.body.source }}\",\n  \"raw_message\": \"{{ $json.body.message }}\",\n  \"timestamp\": \"{{ $now.toISO() }}\"\n}",
+        "options": {}
+      },
+      "id": "node-normalize",
+      "name": "Normalize Input",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "resource": "chat",
+        "model": {
+          "__rl": true,
+          "value": "gpt-5.4",
+          "mode": "list",
+          "cachedResultName": "GPT-5.4"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are an AI triage agent for ArcVault, a B2B software company. Your job is to classify, enrich, and summarize inbound customer support requests.\n\nAnalyze the following support request and return a single JSON object with these exact fields:\n\n1. **category** — MUST be exactly one of: \"Bug Report\", \"Feature Request\", \"Billing Issue\", \"Technical Question\", \"Incident/Outage\"\n2. **priority** — MUST be exactly one of: \"Low\", \"Medium\", \"High\"\n3. **confidence_score** — a decimal between 0.0 and 1.0 representing how certain you are about the classification\n4. **core_issue** — one clear sentence summarizing the core problem or request\n5. **extracted_entities** — an object containing any relevant identifiers found in the message (account IDs, invoice numbers, error codes, product names, dollar amounts, etc.). Use descriptive keys. If none found, return an empty object {}.\n6. **urgency_signal** — MUST be exactly one of: \"Low\", \"Medium\", \"High\" — based on the message tone, impact scope, and business criticality\n7. **human_summary** — 2-3 sentences suitable for the receiving team, summarizing what happened, what the customer needs, and any critical details\n\nRules:\n- Return ONLY valid JSON. No markdown, no code fences, no explanation outside the JSON.\n- Be precise with entity extraction — capture account URLs, invoice numbers, error codes, dollar amounts, product names.\n- For confidence_score: use 0.90+ when the category is very clear, 0.70-0.89 when reasonably clear, below 0.70 when ambiguous.\n- For priority: \"High\" if the user is blocked, losing money, or multiple users are affected. \"Medium\" for non-blocking issues with moderate impact. \"Low\" for informational requests or nice-to-haves.\n- For urgency_signal: consider whether the issue is time-sensitive, affects revenue, or impacts multiple users.\n\n---\n\nSource: {{ $json.source }}\nMessage: {{ $json.raw_message }}\n\n---\n\nRespond with only the JSON object.",
+              "role": "user"
+            }
+          ]
+        },
+        "options": {
+          "temperature": 0.2,
+          "responseFormat": "json_object"
+        }
+      },
+      "id": "node-openai",
+      "name": "OpenAI Classification",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [680, 300],
+      "credentials": {
+        "openAiApi": {
+          "id": "CONFIGURE_ME",
+          "name": "OpenAI API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// Node 4: Schema Validation\n// Validates the LLM response before routing to catch\n// malformed or incomplete output.\n// ============================================================\n\nconst input = $input.first().json;\n\n// Parse LLM response — handle both direct JSON and wrapped message objects\nlet llmOutput;\ntry {\n  const content = input.message?.content || input.text || input.content || JSON.stringify(input);\n  llmOutput = typeof content === 'string' ? JSON.parse(content) : content;\n} catch (e) {\n  return [{\n    json: {\n      request_id: input.request_id,\n      source: input.source,\n      raw_message: input.raw_message,\n      timestamp: input.timestamp,\n      validation_passed: false,\n      escalation_flag: true,\n      destination_queue: 'Escalation Queue',\n      escalation_reason: 'Failed to parse LLM response as JSON: ' + e.message,\n      category: 'Unknown',\n      priority: 'High',\n      confidence_score: 0,\n      core_issue: 'LLM output could not be parsed',\n      extracted_entities: {},\n      urgency_signal: 'High',\n      human_summary: 'The AI classification failed to produce valid output. Manual review required.',\n      validation_errors: [e.message]\n    }\n  }];\n}\n\nconst VALID_CATEGORIES = ['Bug Report', 'Feature Request', 'Billing Issue', 'Technical Question', 'Incident/Outage'];\nconst VALID_PRIORITIES = ['Low', 'Medium', 'High'];\nconst errors = [];\n\nif (!VALID_CATEGORIES.includes(llmOutput.category)) {\n  errors.push(`Invalid category: '${llmOutput.category}'`);\n}\nif (!VALID_PRIORITIES.includes(llmOutput.priority)) {\n  errors.push(`Invalid priority: '${llmOutput.priority}'`);\n}\n\nconst score = parseFloat(llmOutput.confidence_score);\nif (isNaN(score) || score < 0 || score > 1) {\n  errors.push(`Invalid confidence_score: '${llmOutput.confidence_score}'`);\n}\n\nif (!llmOutput.core_issue || typeof llmOutput.core_issue !== 'string' || llmOutput.core_issue.trim() === '') {\n  errors.push('Missing or empty core_issue');\n}\nif (!llmOutput.human_summary || typeof llmOutput.human_summary !== 'string' || llmOutput.human_summary.trim() === '') {\n  errors.push('Missing or empty human_summary');\n}\n\nconst validationPassed = errors.length === 0;\n\nreturn [{\n  json: {\n    request_id: input.request_id,\n    source: input.source,\n    raw_message: input.raw_message,\n    timestamp: input.timestamp,\n    category: llmOutput.category || 'Unknown',\n    priority: llmOutput.priority || 'High',\n    confidence_score: parseFloat(llmOutput.confidence_score) || 0,\n    core_issue: llmOutput.core_issue || 'Unable to determine',\n    extracted_entities: llmOutput.extracted_entities || {},\n    urgency_signal: llmOutput.urgency_signal || 'High',\n    human_summary: llmOutput.human_summary || 'Manual review required.',\n    validation_passed: validationPassed,\n    validation_errors: errors,\n    escalation_flag: !validationPassed,\n    destination_queue: !validationPassed ? 'Escalation Queue' : '',\n    escalation_reason: !validationPassed ? 'Invalid or incomplete LLM output: ' + errors.join('; ') : ''\n  }\n}];"
+      },
+      "id": "node-validate",
+      "name": "Schema Validation",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// Node 5: Routing Logic\n// Deterministic category-to-queue mapping with keyword\n// override for IT/Security on auth-related questions.\n// ============================================================\n\nconst item = $input.first().json;\n\n// Skip routing if already escalated by validation\nif (item.escalation_flag === true) {\n  return [{ json: item }];\n}\n\nconst CATEGORY_QUEUE_MAP = {\n  'Bug Report': 'Engineering',\n  'Feature Request': 'Product',\n  'Billing Issue': 'Billing',\n  'Incident/Outage': 'Engineering',\n  'Technical Question': 'General Support'\n};\n\nlet destinationQueue = CATEGORY_QUEUE_MAP[item.category] || 'General Support';\n\n// Override for auth/security-related Technical Questions\nif (item.category === 'Technical Question') {\n  const authKeywords = ['sso', 'okta', 'saml', 'oauth', 'authentication',\n    'identity provider', 'permissions', 'auth', 'login', 'credential',\n    'mfa', 'two-factor', '2fa', 'ldap', 'active directory'];\n  const msgLower = (item.raw_message || '').toLowerCase();\n  const hasAuthKeyword = authKeywords.some(kw => msgLower.includes(kw));\n  if (hasAuthKeyword) {\n    destinationQueue = 'IT/Security';\n  }\n}\n\nreturn [{\n  json: {\n    ...item,\n    destination_queue: destinationQueue\n  }\n}];"
+      },
+      "id": "node-routing",
+      "name": "Routing Logic",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// Node 6: Escalation Check\n// Determines if the request needs human review based on\n// confidence threshold, outage indicators, billing amount,\n// or prior validation failure.\n// ============================================================\n\nconst item = $input.first().json;\nconst reasons = [];\n\n// Already flagged by validation\nif (item.escalation_flag === true) {\n  reasons.push(item.escalation_reason || 'Validation failure');\n}\n\n// Low confidence\nif (item.confidence_score < 0.70) {\n  reasons.push(`Low confidence score: ${item.confidence_score}`);\n}\n\n// Incident/Outage category\nif (item.category === 'Incident/Outage') {\n  reasons.push('Category is Incident/Outage — requires immediate human review');\n}\n\n// Outage keyword detection\nconst outageKeywords = ['outage', 'down for all users', 'multiple users affected',\n  'not loading', 'service down', 'system down', 'stopped loading',\n  'stopped working', 'completely down'];\nconst msgLower = (item.raw_message || '').toLowerCase();\nfor (const kw of outageKeywords) {\n  if (msgLower.includes(kw)) {\n    reasons.push(`Outage indicator detected: \"${kw}\"`);\n    break;\n  }\n}\n\n// Billing discrepancy > $500\nif (item.category === 'Billing Issue') {\n  const amounts = (item.raw_message || '').match(/\\$([\\d,]+\\.?\\d*)/g);\n  if (amounts && amounts.length >= 2) {\n    const values = amounts.map(a => parseFloat(a.replace(/[$,]/g, ''))).sort((a, b) => b - a);\n    const discrepancy = values[0] - values[1];\n    if (discrepancy > 500) {\n      reasons.push(`Billing discrepancy of $${discrepancy} exceeds $500 threshold`);\n    }\n  }\n}\n\nconst shouldEscalate = reasons.length > 0;\n\nreturn [{\n  json: {\n    ...item,\n    escalation_flag: shouldEscalate,\n    escalation_reason: shouldEscalate ? reasons.join('; ') : '',\n    destination_queue: shouldEscalate ? 'Escalation Queue' : item.destination_queue\n  }\n}];"
+      },
+      "id": "node-escalation",
+      "name": "Escalation Check",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1340, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// Node 7: Finalize Structured Record\n// Builds the clean output record before branching to Sheets.\n// Running here ensures Respond to Webhook always has data\n// even if Google Sheets credentials are not yet configured.\n// ============================================================\n\nconst item = $input.first().json;\n\nconst structuredRecord = {\n  id: item.request_id,\n  source: item.source,\n  category: item.category,\n  priority: item.priority,\n  confidence_score: item.confidence_score,\n  core_issue: item.core_issue,\n  extracted_entities: item.extracted_entities,\n  urgency_signal: item.urgency_signal,\n  destination_queue: item.destination_queue,\n  escalation_flag: item.escalation_flag,\n  escalation_reason: item.escalation_reason || '',\n  human_summary: item.human_summary,\n  raw_message: item.raw_message,\n  timestamp: item.timestamp\n};\n\nreturn [{ json: structuredRecord }];"
+      },
+      "id": "node-finalize",
+      "name": "Finalize Record",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1560, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json, null, 2) }}",
+        "options": {}
+      },
+      "id": "node-respond",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1780, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "escalation-check",
+              "leftValue": "={{ $json.escalation_flag }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "node-if-escalation",
+      "name": "IF Escalated",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [2000, 300]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "CONFIGURE_ME",
+          "mode": "list"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Processed Requests",
+          "mode": "list"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ID": "={{ $json.id }}",
+            "Source": "={{ $json.source }}",
+            "Category": "={{ $json.category }}",
+            "Priority": "={{ $json.priority }}",
+            "Confidence Score": "={{ $json.confidence_score }}",
+            "Core Issue": "={{ $json.core_issue }}",
+            "Extracted Entities": "={{ JSON.stringify($json.extracted_entities) }}",
+            "Urgency Signal": "={{ $json.urgency_signal }}",
+            "Destination Queue": "={{ $json.destination_queue }}",
+            "Escalation Flag": "={{ $json.escalation_flag }}",
+            "Escalation Reason": "={{ $json.escalation_reason }}",
+            "Human Summary": "={{ $json.human_summary }}",
+            "Raw Message": "={{ $json.raw_message }}",
+            "Timestamp": "={{ $json.timestamp }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "node-sheets-main",
+      "name": "Google Sheets - Processed",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [2220, 420],
+      "continueOnFail": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "CONFIGURE_ME",
+          "name": "Google Sheets OAuth2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "CONFIGURE_ME",
+          "mode": "list"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Escalation Queue",
+          "mode": "list"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ID": "={{ $json.id }}",
+            "Source": "={{ $json.source }}",
+            "Category": "={{ $json.category }}",
+            "Priority": "={{ $json.priority }}",
+            "Confidence Score": "={{ $json.confidence_score }}",
+            "Core Issue": "={{ $json.core_issue }}",
+            "Extracted Entities": "={{ JSON.stringify($json.extracted_entities) }}",
+            "Urgency Signal": "={{ $json.urgency_signal }}",
+            "Destination Queue": "={{ $json.destination_queue }}",
+            "Escalation Flag": "={{ $json.escalation_flag }}",
+            "Escalation Reason": "={{ $json.escalation_reason }}",
+            "Human Summary": "={{ $json.human_summary }}",
+            "Raw Message": "={{ $json.raw_message }}",
+            "Timestamp": "={{ $json.timestamp }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "node-sheets-escalation",
+      "name": "Google Sheets - Escalation",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [2220, 180],
+      "continueOnFail": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "CONFIGURE_ME",
+          "name": "Google Sheets OAuth2"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Normalize Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Input": {
+      "main": [
+        [
+          {
+            "node": "OpenAI Classification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Classification": {
+      "main": [
+        [
+          {
+            "node": "Schema Validation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schema Validation": {
+      "main": [
+        [
+          {
+            "node": "Routing Logic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Routing Logic": {
+      "main": [
+        [
+          {
+            "node": "Escalation Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Escalation Check": {
+      "main": [
+        [
+          {
+            "node": "Finalize Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Finalize Record": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Webhook": {
+      "main": [
+        [
+          {
+            "node": "IF Escalated",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Escalated": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets - Escalation",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Google Sheets - Processed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "ArcVault",
+      "id": "1"
+    },
+    {
+      "name": "AI Triage",
+      "id": "2"
+    }
+  ],
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "local"
+  }
+}

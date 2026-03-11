@@ -1,0 +1,37 @@
+[
+  {
+    "category": "Bug Report",
+    "priority": "High",
+    "confidence_score": 0.95,
+    "core_issue": "User cannot log in and receives a 403 error when accessing their account after last Tuesday's update.",
+    "extracted_entities": {
+      "url": "arcvault.io/user/jsmith",
+      "error_code": "403",
+      "timestamp_reference": [
+        "this morning",
+        "last Tuesday"
+      ]
+    },
+    "urgency_signal": "High",
+    "destination_queue": "Engineering",
+    "escalation_flag": false,
+    "escalation_reason": "",
+    "human_summary": "The customer reports being blocked from logging in with a 403 error at arcvault.io/user/jsmith; the issue started after last Tuesday's update and was observed this morning. They need access restored and confirmation of the root cause. Please check authentication/authorization changes from the update and review logs for 403 responses for this account."
+  },
+  {
+    "error": "No response",
+    "request_id": 2
+  },
+  {
+    "error": "No response",
+    "request_id": 3
+  },
+  {
+    "error": "No response",
+    "request_id": 4
+  },
+  {
+    "error": "No response",
+    "request_id": 5
+  }
+]

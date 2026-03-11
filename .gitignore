@@ -205,3 +205,13 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# n8n local data
+.n8n/
+
+# Project secrets
+.env
+
+# Node modules (if n8n installed locally)
+node_modules/
+package-lock.json
