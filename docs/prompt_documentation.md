@@ -125,3 +125,31 @@ The workflow needs structured data for routing and escalation, but it also needs
 ## What I would improve next
 
 If I had more time, I would improve this prompt in three ways. First, I would add a small few-shot section with 3 to 5 representative examples, especially edge cases like SSO questions, login failures, and billing discrepancies. Second, I would tighten the entity extraction guidance so recurring fields are normalized more consistently. Third, I would test the prompt against a larger set of adversarial or ambiguous inputs and tune the wording based on actual failure patterns rather than only the provided sample set.
+
+## How I would use LangSmith Playground and Experiments to optimize the prompt
+
+Beyond manual iteration, my next step for improving this prompt would be to use LangSmith Playground and Experiments to systematically evaluate and refine it against real and synthetic support requests.
+
+### Playground for rapid iteration
+
+LangSmith Playground allows me to test prompt variations interactively against individual inputs without redeploying the workflow. I would use it to quickly compare how different phrasings, rule orderings, or few-shot examples affect the model's output for specific edge cases. For example, I could take a message that was previously misclassified as "Bug Report" instead of "Incident/Outage" and iterate on the category decision rules in real time until the output is correct and the reasoning is sound. Playground makes this feedback loop fast because I can adjust the prompt, swap models, and tweak parameters like temperature all in one place without touching the n8n workflow.
+
+### Experiments for structured evaluation at scale
+
+Once I have a candidate prompt from Playground, I would run it through LangSmith Experiments to evaluate it against a curated dataset of test cases. Each test case would include a raw support message and the expected structured output (category, priority, urgency, entities, etc.). Experiments would let me score the prompt across the full dataset using custom evaluators, for example checking whether the predicted category matches the expected category, whether the confidence score falls within a reasonable range, and whether fabricated entities appear in the output. This moves prompt improvement from guesswork to measurable comparison: I can see exactly which cases improved, which regressed, and where the prompt still falls short.
+
+### Building a golden dataset
+
+To support this, I would build a golden dataset of 20 to 50 representative support requests covering all five categories, a range of priorities and urgency levels, and deliberate edge cases like mixed-intent messages, vague descriptions, and messages with no extractable entities. Each entry would have a human-labeled expected output. This dataset becomes the ground truth for every future prompt change, ensuring I never improve one category at the cost of another.
+
+### Iterative workflow
+
+The full loop would look like this:
+
+1. Identify failure patterns from production traces in LangSmith.
+2. Reproduce those failures in Playground and iterate on the prompt.
+3. Run the updated prompt through Experiments against the golden dataset.
+4. Compare metrics across prompt versions to confirm net improvement.
+5. Promote the best-performing version back into the n8n workflow.
+
+This approach treats prompt engineering as an empirical process rather than a one-shot design exercise, which is critical for a production triage system where classification accuracy directly affects routing quality and response times.

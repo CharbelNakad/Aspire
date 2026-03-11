@@ -3,36 +3,38 @@
     "category": "Bug Report",
     "priority": "High",
     "confidence_score": 0.95,
-    "core_issue": "User receives a 403 error when attempting to log in to arcvault.io/user/jsmith after the update deployed last Tuesday.",
+    "core_issue": "User cannot log in and receives a 403 error after the update deployed last Tuesday for account arcvault.io/user/jsmith.",
     "extracted_entities": {
-      "account_id": "jsmith",
       "url": "arcvault.io/user/jsmith",
       "error_code": "403",
-      "timestamp_reference": "last Tuesday"
+      "timestamp_reference": "last Tuesday",
+      "affected_users": [
+        "jsmith"
+      ]
     },
     "urgency_signal": "High",
     "destination_queue": "Engineering",
     "escalation_flag": false,
     "escalation_reason": "",
-    "human_summary": "Customer reports they cannot log in and receive a 403 error when accessing arcvault.io/user/jsmith. Issue began after the update rolled out last Tuesday; customer needs access restored or guidance on resolving the permission/authorization error. Critical details: affected account 'jsmith' and error code 403."
+    "human_summary": "The customer reports being blocked from logging in with a 403 error since your update last Tuesday and provided the account URL arcvault.io/user/jsmith. They need access restored or an explanation of the cause and any remediation steps; investigate the post-update auth changes and any rules that could be denying this user."
   },
   {
     "category": "Feature Request",
     "priority": "Medium",
     "confidence_score": 0.95,
-    "core_issue": "Customer requests a bulk export feature for audit logs to save time on compliance-related work.",
+    "core_issue": "Customer requests a bulk export feature for audit logs to streamline compliance reporting and save manual effort.",
     "extracted_entities": {},
     "urgency_signal": "Medium",
     "destination_queue": "Product",
     "escalation_flag": false,
     "escalation_reason": "",
-    "human_summary": "Customer is requesting a bulk export capability for audit logs to support their compliance workflows. They describe themselves as a compliance-heavy organization and say this feature would save them hours each month, so please evaluate feasibility and prioritization for adding an export option for audit logs."
+    "human_summary": "Customer is requesting a bulk export capability for audit logs to support their compliance needs. They describe themselves as a compliance-heavy organization and say the feature would save them hours each month. Please evaluate adding a bulk export (CSV/JSON/other) for audit logs or provide recommended workarounds and ETA if planned."
   },
   {
     "category": "Billing Issue",
-    "priority": "High",
+    "priority": "Medium",
     "confidence_score": 0.95,
-    "core_issue": "Customer reports invoice #8821 shows a charge of $1,240 while their contract rate is $980/month and requests an investigation.",
+    "core_issue": "Invoice #8821 charged $1,240 while the customer's contract rate is $980/month, and they are requesting an investigation into the discrepancy.",
     "extracted_entities": {
       "invoice_number": "8821",
       "dollar_amounts": [
@@ -40,17 +42,17 @@
         "$980/month"
       ]
     },
-    "urgency_signal": "High",
+    "urgency_signal": "Medium",
     "destination_queue": "Billing",
     "escalation_flag": false,
     "escalation_reason": "",
-    "human_summary": "The customer says invoice #8821 billed $1,240, but their contracted rate is $980/month and asks us to look into the discrepancy. Please verify the invoice details, billing rate applied, and adjust or refund if an overcharge occurred. Key details: invoice number 8821 and the two amounts ($1,240 vs $980/month)."
+    "human_summary": "Customer reports that Invoice #8821 shows a charge of $1,240 despite their contract rate being $980/month. They are asking the billing team to investigate the discrepancy, correct the invoice if incorrect, and provide an explanation or refund/credit as appropriate."
   },
   {
     "category": "Technical Question",
     "priority": "Low",
     "confidence_score": 0.95,
-    "core_issue": "Customer is asking whether ArcVault supports SSO integration with Okta and requests guidance on how to configure it as they evaluate switching their auth provider.",
+    "core_issue": "Customer is asking whether ArcVault can be set up to use SSO with Okta and how to configure it, as they are evaluating switching their auth provider.",
     "extracted_entities": {
       "provider": "Okta"
     },
@@ -58,15 +60,14 @@
     "destination_queue": "General Support",
     "escalation_flag": false,
     "escalation_reason": "",
-    "human_summary": "The customer wants to know if ArcVault can be set up with Okta SSO and is evaluating a switch of their authentication provider. Please provide documentation or step-by-step guidance for Okta SSO setup, compatibility notes, and any prerequisites or contact for configuration support."
+    "human_summary": "The customer wants to know if ArcVault supports SSO with Okta and how to set it up because they are evaluating switching their authentication provider. They need configuration guidance and any relevant documentation or prerequisites. Please respond with supported SSO options, integration steps, and any plan/entitlement requirements or offer to schedule a setup call if needed."
   },
   {
     "category": "Incident/Outage",
     "priority": "High",
     "confidence_score": 0.95,
-    "core_issue": "The customer's dashboard stopped loading around 2pm EST and multiple users are affected.",
+    "core_issue": "The ArcVault dashboard stopped loading around 2pm EST and multiple users are unable to access it.",
     "extracted_entities": {
-      "product_name": "dashboard",
       "timestamp_reference": "around 2pm EST",
       "affected_users": "multiple users"
     },
@@ -74,6 +75,148 @@
     "destination_queue": "Escalation Queue",
     "escalation_flag": true,
     "escalation_reason": "Category is Incident/Outage — requires immediate human review",
-    "human_summary": "The customer's dashboard stopped loading around 2pm EST and multiple users are affected; they report the issue is on our side. They require immediate investigation and restoration of dashboard access; no account ID or error code was provided in the message."
+    "human_summary": "Customer reports the ArcVault dashboard stopped loading around 2pm EST and multiple users are impacted. They confirmed the issue is not on their end and are requesting immediate investigation and restoration of service. Please check dashboard availability, recent deployments, and relevant logs for errors at that timeframe."
+  },
+  {
+    "category": "Incident/Outage",
+    "priority": "High",
+    "confidence_score": 0.95,
+    "core_issue": "MFA enrollment fails to complete for three new hires: after scanning the QR code the flow returns them to the start.",
+    "extracted_entities": {},
+    "urgency_signal": "High",
+    "destination_queue": "Escalation Queue",
+    "escalation_flag": true,
+    "escalation_reason": "Category is Incident/Outage — requires immediate human review",
+    "human_summary": "The customer's new IT coordinator reports that three new hires cannot complete MFA enrollment — after scanning the QR code the process bounces them back to the start. They need urgent help diagnosing and resolving the enrollment flow or a workaround so the hires can finish setup. No error codes, account IDs, or screenshots were provided."
+  },
+  {
+    "category": "Bug Report",
+    "priority": "High",
+    "confidence_score": 0.93,
+    "core_issue": "User cannot download the monthly archive report; clicking the download button spins for a while and then nothing happens.",
+    "extracted_entities": {},
+    "urgency_signal": "High",
+    "destination_queue": "Engineering",
+    "escalation_flag": false,
+    "escalation_reason": "",
+    "human_summary": "A non-technical user reports since yesterday they are unable to download the monthly archive report for their board—clicking the download button spins then fails to produce the file. They need the report to send to their board, so please investigate the download flow and provide a fix or an immediate workaround (e.g., direct link or manual export). No account or error details were provided; request account info and any relevant logs if needed."
+  },
+  {
+    "category": "Billing Issue",
+    "priority": "High",
+    "confidence_score": 0.95,
+    "core_issue": "Customer was billed for 42 active seats this month despite reducing their seat count to 35 in January and requests a billing review before quarter close.",
+    "extracted_entities": {
+      "affected_users": {
+        "billed_seats": 42,
+        "expected_seats": 35
+      },
+      "timestamp_reference": {
+        "reduction_month": "January",
+        "billing_period": "this month",
+        "quarter_close": "before quarter close"
+      }
+    },
+    "urgency_signal": "High",
+    "destination_queue": "Billing",
+    "escalation_flag": false,
+    "escalation_reason": "",
+    "human_summary": "Finance noticed an overbilling: 42 seats were charged this month even though the seat count was reduced to 35 in January. They need the account and invoice reviewed and corrected before they close out the quarter; they can provide an admin screenshot if needed."
+  },
+  {
+    "category": "Feature Request",
+    "priority": "Low",
+    "confidence_score": 0.95,
+    "core_issue": "Request to add the ability to tag archived records with project codes to enable faster searching during audits.",
+    "extracted_entities": {},
+    "urgency_signal": "Low",
+    "destination_queue": "Product",
+    "escalation_flag": false,
+    "escalation_reason": "",
+    "human_summary": "An intern assisting the compliance manager proposes a feature to tag archived records by project code so records can be located more quickly during audits. They are asking for archive-level tagging/search capability to speed audit workflows. No error codes, account IDs, or timestamps were provided."
+  },
+  {
+    "category": "Incident/Outage",
+    "priority": "High",
+    "confidence_score": 0.95,
+    "core_issue": "Password reset emails are delayed by about 25 minutes, causing several branch employees to be locked out just before opening and unable to access customer files.",
+    "extracted_entities": {
+      "timestamp_reference": "about 25 minutes",
+      "affected_users": "several branch employees"
+    },
+    "urgency_signal": "High",
+    "destination_queue": "Escalation Queue",
+    "escalation_flag": true,
+    "escalation_reason": "Category is Incident/Outage — requires immediate human review",
+    "human_summary": "Caller reports password reset emails are arriving roughly 25 minutes late, preventing several branch employees from logging in right before opening. They need immediate resolution so staff can access customer files and open branches; multiple users are impacted and the delay is time-sensitive."
+  },
+  {
+    "category": "Technical Question",
+    "priority": "Medium",
+    "confidence_score": 0.95,
+    "core_issue": "Customer requests confirmation whether ArcVault supports SCIM provisioning with Microsoft Entra ID and whether there is a setup guide beyond the basic SSO documentation.",
+    "extracted_entities": {
+      "provider": "Microsoft Entra ID",
+      "product_name": "ArcVault"
+    },
+    "urgency_signal": "Medium",
+    "destination_queue": "General Support",
+    "escalation_flag": false,
+    "escalation_reason": "",
+    "human_summary": "The customer is undergoing a security review and needs to know if ArcVault supports SCIM provisioning with Microsoft Entra ID. They also ask if there is a setup/configuration guide more detailed than the basic SSO documentation. Please confirm support status and provide any SCIM-specific setup docs or links and relevant configuration steps for Entra ID."
+  },
+  {
+    "category": "Incident/Outage",
+    "priority": "High",
+    "confidence_score": 0.95,
+    "core_issue": "The activity feed/timeline has been frozen for about an hour and does not show new uploads unless the user performs a hard refresh.",
+    "extracted_entities": {},
+    "urgency_signal": "High",
+    "destination_queue": "Escalation Queue",
+    "escalation_flag": true,
+    "escalation_reason": "Category is Incident/Outage — requires immediate human review",
+    "human_summary": "The customer's activity feed has been frozen for nearly an hour: new uploads are processed but do not appear in the timeline unless the user hard refreshes the page. Their ops team relies on the live activity screen and is effectively blocked; they need this feed to resume real-time updates. Key detail: uploads succeed but the timeline UI is not updating, workaround is a manual hard refresh."
+  },
+  {
+    "category": "Technical Question",
+    "priority": "Medium",
+    "confidence_score": 0.78,
+    "core_issue": "A client folder is missing two consent forms from last week and the customer wants to determine whether the files were deleted or failed to sync.",
+    "extracted_entities": {},
+    "urgency_signal": "Medium",
+    "destination_queue": "General Support",
+    "escalation_flag": false,
+    "escalation_reason": "",
+    "human_summary": "A client reports two consent forms are missing from a client folder; a part-time case manager insists they did not delete the files. The customer asks us to investigate whether the files were removed or not synced, and to confirm file history/restore options. Please check deletion/audit logs, file version history, sync status for that user's device/account, and available recovery or restore paths."
+  },
+  {
+    "category": "Bug Report",
+    "priority": "High",
+    "confidence_score": 0.95,
+    "core_issue": "After the latest iPhone update, the mobile app uploads the first photo to a record but then fails on the second image, with the app hanging.",
+    "extracted_entities": {
+      "provider": "iPhone",
+      "product_name": [
+        "mobile app",
+        "desktop site"
+      ]
+    },
+    "urgency_signal": "High",
+    "destination_queue": "Engineering",
+    "escalation_flag": false,
+    "escalation_reason": "",
+    "human_summary": "User reports that following the most recent iPhone update, the ArcVault mobile app successfully uploads the first photo into a record but hangs when attempting to upload the second image. The customer primarily uses the mobile app (less frequent desktop use) and needs the multi-photo upload flow fixed so they can attach additional images. No error codes or timestamps were provided."
+  },
+  {
+    "category": "Feature Request",
+    "priority": "Medium",
+    "confidence_score": 0.95,
+    "core_issue": "Customer is requesting a read-only auditor role so outside reviewers can view content without being granted excessive access or requiring a staff member to sit with them during reviews.",
+    "extracted_entities": {},
+    "urgency_signal": "Medium",
+    "destination_queue": "Product",
+    "escalation_flag": false,
+    "escalation_reason": "",
+    "human_summary": "The customer asks that ArcVault add a read-only 'auditor' role. Currently they either must grant outside reviewers broader access than desired or have an internal user present for every review session. They need a role that allows viewing only to streamline reviews and protect sensitive actions."
   }
 ]

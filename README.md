@@ -1,159 +1,127 @@
-# ArcVault AI-Powered Intake & Triage Pipeline
+# ArcVault AI Intake & Triage Pipeline
 
-An end-to-end AI automation workflow that processes unstructured customer support requests, classifies them using GPT-5.4, enriches them with structured metadata, and routes them to the correct operational queue — with automatic escalation for low-confidence or high-risk items.
+This repository is organized as a reviewer guide for the deliverables requested in `AI_Engineer_Technical_Intermediate-Senior.docx`. It contains the working n8n workflow export, prompt documentation, architecture write-up, structured output examples, screenshots, and a demo video for the ArcVault AI-powered intake and triage pipeline assessment.
 
-Built with **n8n** (workflow orchestration), **OpenAI GPT-5.4** (classification & enrichment), and **Google Sheets** (structured output).
+## Quick Review Links
 
----
+- Assessment brief: `AI_Engineer_Technical_Intermediate-Senior.docx`
+- Demo video: [Loom walkthrough](https://www.loom.com/share/23ad722fd454492a9121ae79abfef391)
+- Workflow export: `n8n_workflow.json`
+- Structured outputs: `structured_output.json`
+- Prompt documentation: `docs/prompt_documentation.md`
+- Architecture write-up: `docs/architecture_writeup.md`
+- Test runner: `scripts/send_test_requests.py`
+- Environment template: `.env.example`
 
-## Quick Start
+## Deliverables Map
 
-### Prerequisites
+### 1. Working Workflow
 
-- **Node.js** v18+ (for n8n) or **Docker**
-- **Python** 3.9+ (for test script)
-- **OpenAI API key** with access to `gpt-5.4`
-- **Google Cloud** service account or OAuth2 credentials for Sheets API
+The assignment asks for a working end-to-end workflow and a way to review it in action.
 
-### 1. Clone & Configure
+- The complete n8n workflow export is in `n8n_workflow.json`.
+- The end-to-end walkthrough video is here: [Loom walkthrough](https://www.loom.com/share/23ad722fd454492a9121ae79abfef391).
+- Supporting screenshots are included in `screenshots/`:
+  - `screenshots/n8n_workflow.png`
+  - `screenshots/normal_queue.png`
+  - `screenshots/escalation_queue.png`
 
-```bash
-git clone <repo-url>
-cd Aspire
-cp .env.example .env
-# Edit .env with your actual API keys
-```
+### 2. Structured Output File
 
-### 2. Start n8n
+The structured output deliverable is included in `structured_output.json`.
 
-**Option A — npx (quickest):**
-```bash
-npx n8n
-```
+- It contains the required output fields from the brief:
+  - `category`
+  - `priority`
+  - `confidence_score`
+  - `core_issue`
+  - `extracted_entities`
+  - `urgency_signal`
+  - `destination_queue`
+  - `escalation_flag`
+  - `escalation_reason`
+  - `human_summary`
+- The file includes the five required sample inputs from the assessment and additional test cases used to pressure-test routing and escalation behavior.
 
-**Option B — Docker:**
-```bash
-docker run -it --rm -p 5678:5678 -v n8n_data:/home/node/.n8n n8nio/n8n
-```
+### 3. Prompt Documentation
 
-n8n will be available at `http://localhost:5678`.
+The prompt documentation requested in the brief is in `docs/prompt_documentation.md`.
 
-### 3. Import the Workflow
+- It includes the full LLM prompt used in the `AI Triage` step.
+- It explains why the prompt was structured that way.
+- It documents tradeoffs made for reliability, schema consistency, and routing alignment.
+- It notes what would be improved with more time.
 
-1. Open n8n at `http://localhost:5678`
-2. Go to **Workflows** → **Import from File**
-3. Select `n8n_workflow.json` from this repo
-4. Configure credentials:
-   - **OpenAI**: Add your API key in n8n credentials
-   - **Google Sheets**: Add OAuth2 or Service Account credentials
+### 4. Architecture Write-Up
 
-### 4. Set Up Google Sheets
+The architecture write-up requested in the brief is in `docs/architecture_writeup.md`.
 
-Create a Google Sheet with two tabs:
+It covers:
 
-| Tab Name | Purpose |
-|---|---|
-| **Processed Requests** | Standard routed items |
-| **Escalation Queue** | Low-confidence / high-risk items for human review |
+- system design and component flow
+- where state is held
+- routing logic and queue mapping
+- escalation logic and fallback behavior
+- production-scale improvements for reliability, latency, and cost
+- a Phase 2 extension plan
 
-Both tabs should have these column headers (Row 1):
+## What The Workflow Does
 
-```
-ID | Source | Category | Priority | Confidence Score | Core Issue | Extracted Entities | Urgency Signal | Destination Queue | Escalation Flag | Escalation Reason | Human Summary | Raw Message | Timestamp
-```
+The pipeline is designed around the six required workflow stages from the assessment:
 
-### 5. Run Test Requests
+1. Ingest an inbound support request through an n8n webhook.
+2. Classify the message with an LLM into one of the required support categories.
+3. Enrich the message with extracted entities, a core issue, urgency, and a human summary.
+4. Route the request to a destination queue using deterministic logic.
+5. Persist a structured JSON record for downstream use.
+6. Escalate low-confidence or high-risk cases to a dedicated escalation queue.
 
-```bash
-cd scripts
-pip install -r requirements.txt
-python send_test_requests.py
-```
+## Assessment Requirement Coverage
 
----
+Below is a direct mapping from the assignment brief to the repository artifacts.
 
-## Model Switching
+| Assessment requirement | Repo artifact |
+| --- | --- |
+| Working workflow | `n8n_workflow.json` |
+| Demo / walkthrough | [Loom walkthrough](https://www.loom.com/share/23ad722fd454492a9121ae79abfef391) |
+| Screenshots of workflow / outputs | `screenshots/n8n_workflow.png`, `screenshots/normal_queue.png`, `screenshots/escalation_queue.png` |
+| Structured output records | `structured_output.json` |
+| LLM prompt(s) and explanation | `docs/prompt_documentation.md` |
+| Architecture write-up | `docs/architecture_writeup.md` |
+| Original assignment brief | `AI_Engineer_Technical_Intermediate-Senior.docx` |
 
-The workflow supports multiple LLM providers. To switch models, update the **model configuration** in the OpenAI node or use the environment variables:
+## Repository Guide
 
-| Provider | Model Name | Use Case |
-|---|---|---|
-| OpenAI | `gpt-5.4` | Default — best structured output quality |
-| OpenAI | `gpt-4o` | Cost-effective alternative |
-| DeepSeek | `deepseek-chat` | Budget-friendly, good general performance |
-| DeepSeek | `deepseek-reasoner` | Enhanced reasoning for complex triage |
+### Core Files
 
----
+- `n8n_workflow.json`: exported workflow containing ingestion, AI triage, validation, routing, escalation, persistence, and webhook response steps
+- `structured_output.json`: saved example output records from processed requests
+- `scripts/send_test_requests.py`: helper script that sends the assessment inputs and extra test cases to the webhook and rewrites `structured_output.json`
 
-## Workflow Architecture
+### Documentation
 
-```
-Webhook/Form Trigger
-        ↓
-  Normalize Input (Set Node)
-        ↓
-  OpenAI Classification + Enrichment (Single LLM Call)
-        ↓
-  Schema Validation (Code Node)
-        ↓
-  Routing Logic (Code Node)
-        ↓
-  Escalation Check (Code Node)
-       ↓                ↓
-  [Normal]          [Escalated]
-       ↓                ↓
-  Google Sheets:    Google Sheets:
-  Processed         Escalation
-  Requests          Queue
-       ↓                ↓
-       └──── Finalize ──┘
-```
+- `docs/prompt_documentation.md`: prompt text plus rationale and tradeoffs
+- `docs/architecture_writeup.md`: system design, routing, escalation, and production-thinking write-up
 
----
+### Visual Assets
 
-## Project Structure
+- `screenshots/n8n_workflow.png`: workflow overview
+- `screenshots/normal_queue.png`: standard processed-request output view
+- `screenshots/escalation_queue.png`: escalated-request output view
 
-```
-Aspire/
-├── README.md
-├── .gitignore
-├── .env.example
-├── n8n_workflow.json          # Importable n8n workflow
-├── structured_output.json     # Final output for all 5 test cases
-├── scripts/
-│   ├── send_test_requests.py  # Python script to fire test requests
-│   └── requirements.txt
-├── docs/
-│   ├── prompt_documentation.md
-│   └── architecture_writeup.md
-└── screenshots/               # Workflow & output screenshots
-```
+## How To Review This Submission
 
----
+For the fastest review path:
 
-## Test Cases
+1. Watch the [Loom walkthrough](https://www.loom.com/share/23ad722fd454492a9121ae79abfef391).
+2. Open `n8n_workflow.json` to inspect the workflow implementation.
+3. Review `structured_output.json` to see the generated records.
+4. Read `docs/prompt_documentation.md` for the LLM prompt and reasoning.
+5. Read `docs/architecture_writeup.md` for the design and tradeoff discussion.
+6. Open the files in `screenshots/` for quick visual confirmation of the workflow and outputs.
 
-| # | Source | Scenario | Expected Category | Expected Priority | Expected Queue |
-|---|---|---|---|---|---|
-| 1 | Email | 403 login error after update | Bug Report | High | Engineering |
-| 2 | Web Form | Bulk export feature for audit logs | Feature Request | Low/Medium | Product |
-| 3 | Support Portal | Invoice overcharge $1,240 vs $980 | Billing Issue | High | Billing |
-| 4 | Email | SSO setup with Okta | Technical Question | Medium | IT/Security |
-| 5 | Web Form | Dashboard down for multiple users | Incident/Outage | High | Escalation Queue |
+## Notes
 
----
-
-## Key Design Decisions
-
-1. **Single LLM call** — Classification, enrichment, confidence scoring, and summary combined into one structured response for reduced latency and better consistency.
-2. **GPT-5.4** — Chosen for reliable structured JSON output and strong general reasoning.
-3. **Deterministic routing** — Queue assignment handled in JavaScript code nodes, not by the LLM, for transparency and debuggability.
-4. **Schema validation before routing** — LLM outputs are validated before being trusted, with invalid responses routed to human review.
-5. **Rule-based escalation with AI classification** — Combines model flexibility with explainable operational guardrails.
-
----
-
-## Documentation
-
-- [Prompt Documentation](docs/prompt_documentation.md)
-- [Architecture Write-Up](docs/architecture_writeup.md)
+- The scenario, company, and customer requests are synthetic and were provided as part of the technical assessment.
+- The routing and escalation behavior intentionally combine LLM output with deterministic rules to keep the workflow auditable and safer for downstream operational use.
+- Sensitive values are not hardcoded in the workflow documentation; environment setup is documented in `.env.example`.

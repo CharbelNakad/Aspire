@@ -1,6 +1,6 @@
 """
 ArcVault AI Triage Pipeline — Test Request Sender
-Sends the 5 sample support requests to the n8n webhook endpoint
+Sends realistic sample support requests to the n8n webhook endpoint
 one at a time with a short delay between requests.
 """
 
@@ -56,6 +56,90 @@ TEST_REQUESTS = [
             "Checked our end — it's definitely on yours. Multiple users affected."
         )
     },
+    {
+        "id": 6,
+        "source": "Chat",
+        "message": (
+            "Hey team, I'm the new IT coordinator here and I might be missing something obvious, "
+            "but I can't get MFA enrollment to finish for three new hires. It keeps bouncing them "
+            "back to the start after they scan the QR code."
+        )
+    },
+    {
+        "id": 7,
+        "source": "Email",
+        "message": (
+            "Good afternoon, I'm 72 and not especially technical, so apologies if this is a simple fix. "
+            "Since yesterday I haven't been able to download the monthly archive report I normally send to our board. "
+            "The button spins for a while and then nothing happens."
+        )
+    },
+    {
+        "id": 8,
+        "source": "Support Portal",
+        "message": (
+            "Our finance team noticed we were billed for 42 active seats this month, but we reduced that to 35 in January. "
+            "Could you review the account before we close out the quarter? I can send the admin screenshot if helpful."
+        )
+    },
+    {
+        "id": 9,
+        "source": "Web Form",
+        "message": (
+            "I'm a college intern helping our compliance manager and I had a feature idea: "
+            "it would be really helpful if archived records could be tagged by project code so we can find them faster during audits."
+        )
+    },
+    {
+        "id": 10,
+        "source": "Phone Transcript",
+        "message": (
+            "Caller reports that password reset emails are arriving about 25 minutes late. "
+            "This is affecting several branch employees who are locked out right before opening and need immediate access to customer files."
+        )
+    },
+    {
+        "id": 11,
+        "source": "Email",
+        "message": (
+            "We're in the middle of a security review and need to confirm whether ArcVault supports SCIM provisioning with Microsoft Entra ID. "
+            "If it does, is there any setup guide beyond the basic SSO documentation?"
+        )
+    },
+    {
+        "id": 12,
+        "source": "Chat",
+        "message": (
+            "Not trying to be dramatic, but the activity feed has been frozen for almost an hour and our ops team uses that screen all day. "
+            "New uploads are going through, they just aren't showing up in the timeline unless we hard refresh."
+        )
+    },
+    {
+        "id": 13,
+        "source": "Support Portal",
+        "message": (
+            "One of our case managers works part-time and swears she didn't delete anything, "
+            "but a client folder appears to be missing two consent forms from last week. "
+            "Can someone help us figure out whether they were removed or just not synced?"
+        )
+    },
+    {
+        "id": 14,
+        "source": "Web Form",
+        "message": (
+            "I'm 24 and usually use the mobile app more than the desktop site. "
+            "After the last iPhone update, uploading photos into a record fails on the second image every time. "
+            "The first one works, then the app just sits there."
+        )
+    },
+    {
+        "id": 15,
+        "source": "Email",
+        "message": (
+            "Could you please consider adding a read-only auditor role? "
+            "Right now we have to choose between giving outside reviewers too much access or sitting with them during every review session."
+        )
+    },
 ]
 
 EXPECTED_OUTPUTS = {
@@ -64,6 +148,16 @@ EXPECTED_OUTPUTS = {
     3: {"category": "Billing Issue",       "priority": "High",          "queue": "Billing"},
     4: {"category": "Technical Question",  "priority": "Medium",        "queue": "IT/Security"},
     5: {"category": "Incident/Outage",     "priority": "High",          "queue": "Escalation Queue"},
+    6: {"category": "Bug Report",          "priority": "High",          "queue": "Engineering"},
+    7: {"category": "Bug Report",          "priority": "Medium",        "queue": "Engineering"},
+    8: {"category": "Billing Issue",       "priority": "High",          "queue": "Billing"},
+    9: {"category": "Feature Request",     "priority": "Low/Medium",    "queue": "Product"},
+    10: {"category": "Incident/Outage",    "priority": "High",          "queue": "Escalation Queue"},
+    11: {"category": "Technical Question", "priority": "Medium",        "queue": "IT/Security"},
+    12: {"category": "Incident/Outage",    "priority": "High",          "queue": "Escalation Queue"},
+    13: {"category": "Bug Report",         "priority": "High",          "queue": "Engineering"},
+    14: {"category": "Bug Report",         "priority": "Medium",        "queue": "Engineering"},
+    15: {"category": "Feature Request",    "priority": "Low/Medium",    "queue": "Product"},
 }
 
 DELAY_BETWEEN_REQUESTS = 3
